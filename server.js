@@ -1,51 +1,62 @@
+// server.js
 import express from "express";
-import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
+import { MongoClient } from "mongodb";
+
+import createLessonsRouter from "./routes/lessons.js";
+import createOrdersRouter from "./routes/orders.js";
 
 dotenv.config();
 
 const app = express();
 
-// -------- MIDDLEWARE --------
+// ---------- MIDDLEWARE ----------
 
 // CORS
 app.use(cors());
 app.use(express.json());
 
-// Logger middleware (REQUIRED for coursework)
+// Logger (required by coursework)
 app.use((req, res, next) => {
   const time = new Date().toISOString();
   console.log(`[${time}] ${req.method} ${req.url}`);
   next();
 });
 
-// Static file middleware (REQUIRED for coursework)
+// Static files (images)
 app.use("/images", express.static("images"));
 
-
-// -------- DATABASE --------
-
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.log("❌ MongoDB error:", err));
-
-
-// -------- ROUTES --------
-
-import lessonsRoute from "./routes/lessons.js";
-import ordersRoute from "./routes/orders.js";
-
-app.use("/lessons", lessonsRoute);
-app.use("/orders", ordersRoute);
-
-// Test route
-app.get("/", (req, res) => {
-  res.send("Backend server is running 🚀");
-});
-
-
-// -------- START SERVER --------
-
 const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+const MONGO_URI = process.env.MONGO_URI;
+
+// ---------- MONGODB CONNECTION + START ----------
+
+async function startServer() {
+  try {
+    const client = new MongoClient(MONGO_URI);
+    await client.connect();
+    console.log("✅ Connected to MongoDB with native driver");
+
+    // Use your DB name here
+    const db = client.db("AfterSchoolDB");
+
+    // Attach routers with db
+    app.use("/lessons", createLessonsRouter(db));
+    app.use("/orders", createOrdersRouter(db));
+
+    // Test root route
+    app.get("/", (req, res) => {
+      res.send("Backend server is running 🚀");
+    });
+
+    app.listen(PORT, () =>
+      console.log(`🚀 Server running on port ${PORT}`)
+    );
+  } catch (err) {
+    console.error("❌ Failed to start server:", err);
+    process.exit(1);
+  }
+}
+
+startServer();

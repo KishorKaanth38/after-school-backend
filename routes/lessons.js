@@ -1,43 +1,66 @@
+// routes/lessons.js
 import express from "express";
-import Lesson from "../models/Lesson.js";
+import { ObjectId } from "mongodb";
 
-const router = express.Router();
+export default function createLessonsRouter(db) {
+  const router = express.Router();
+  const lessonsCollection = db.collection("lessons");
 
-// GET all lessons
-router.get("/", async (req, res) => {
-  try {
-    const lessons = await Lesson.find();
-    res.json(lessons);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch lessons" });
-  }
-});
-
-// PUT - update lesson spaces (REQUIRED for coursework)
-router.put("/:id", async (req, res) => {
-  try {
-    const lessonId = req.params.id;
-    const { spaces } = req.body;
-
-    const updatedLesson = await Lesson.findByIdAndUpdate(
-      lessonId,
-      { spaces: spaces },
-      { new: true }
-    );
-
-    if (!updatedLesson) {
-      return res.status(404).json({ error: "Lesson not found" });
+  // GET /lessons – all lessons
+  router.get("/", async (req, res) => {
+    try {
+      const lessons = await lessonsCollection.find().toArray();
+      res.json(lessons);
+    } catch (err) {
+      console.error("Error fetching lessons:", err);
+      res.status(500).json({ error: "Failed to fetch lessons" });
     }
+  });
 
-    res.json({
-      message: "Lesson updated successfully",
-      lesson: updatedLesson
-    });
+  // GET /lessons/:id – single lesson (optional but useful)
+  router.get("/:id", async (req, res) => {
+    try {
+      const id = req.params.id;
+      const lesson = await lessonsCollection.findOne({
+        _id: new ObjectId(id),
+      });
 
-  } catch (err) {
-    console.error("PUT /lessons error:", err);
-    res.status(500).json({ error: "Failed to update lesson" });
-  }
-});
+      if (!lesson) {
+        return res.status(404).json({ error: "Lesson not found" });
+      }
 
-export default router;
+      res.json(lesson);
+    } catch (err) {
+      console.error("Error fetching lesson:", err);
+      res.status(500).json({ error: "Failed to fetch lesson" });
+    }
+  });
+
+  // PUT /lessons/:id – update spaces (used after order)
+  router.put("/:id", async (req, res) => {
+    try {
+      const id = req.params.id;
+      const { spaces } = req.body;
+
+      if (typeof spaces !== "number") {
+        return res.status(400).json({ error: "Spaces must be a number" });
+      }
+
+      const result = await lessonsCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { spaces } }
+      );
+
+      if (result.matchedCount === 0) {
+        return res.status(404).json({ error: "Lesson not found" });
+      }
+
+      res.json({ message: "Lesson updated", modifiedCount: result.modifiedCount });
+    } catch (err) {
+      console.error("Error updating lesson:", err);
+      res.status(500).json({ error: "Failed to update lesson" });
+    }
+  });
+
+  return router;
+}
