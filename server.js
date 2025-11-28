@@ -20,7 +20,7 @@ app.use(express.json());
 // Logger (required by coursework)
 app.use((req, res, next) => {
   const time = new Date().toISOString();
-  console.log(`[${time}] ${req.method} ${req.url}`);
+  console.log(`[${time}] ${req.method} ${req.url} from ${req.ip}`);
   next();
 });
 
