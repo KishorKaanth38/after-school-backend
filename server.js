@@ -58,4 +58,10 @@ async function startServer() {
   }
 }
 
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error("Server Error:", err);
+  res.status(500).json({ error: "Internal server error" });
+});
+
 startServer();
