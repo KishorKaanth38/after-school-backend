@@ -16,10 +16,22 @@ export default function createOrdersRouter(db) {
         return res.status(400).json({ error: "Missing or invalid fields" });
       }
 
+      if (!/^\d+$/.test(phone)) {
+        return res.status(400).json({
+          error: "Phone number must contain only digits."
+        });
+      }
+
+      if (phone.length < 7 || phone.length > 15) {
+        return res.status(400).json({
+          error: "Phone number length is invalid."
+        });
+      }
+
       const orderDoc = {
         name,
         phone,
-        cart,          // array of { _id, quantity }
+        cart,        
         createdAt: new Date(),
       };
 

@@ -17,7 +17,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Logger (required by coursework)
+// Logger
 app.use((req, res, next) => {
   const time = new Date().toISOString();
   console.log(`[${time}] ${req.method} ${req.url} from ${req.ip}`);
@@ -36,9 +36,8 @@ async function startServer() {
   try {
     const client = new MongoClient(MONGO_URI);
     await client.connect();
-    console.log("✅ Connected to MongoDB with native driver");
+    console.log("Connected to MongoDB");
 
-    // Use your DB name here
     const db = client.db("AfterSchoolDB");
 
     // Attach routers with db
@@ -47,7 +46,7 @@ async function startServer() {
 
     // Test root route
     app.get("/", (req, res) => {
-      res.send("Backend server is running 🚀");
+      res.send("Backend server is running");
     });
 
     app.listen(PORT, () =>
