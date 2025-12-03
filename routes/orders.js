@@ -16,6 +16,12 @@ export default function createOrdersRouter(db) {
         return res.status(400).json({ error: "Missing or invalid fields" });
       }
 
+      if (!/^[A-Za-z\s]+$/.test(name)) {
+        return res.status(400).json({
+          error: "Name must contain letters only."
+        });
+      }
+
       if (!/^\d+$/.test(phone)) {
         return res.status(400).json({
           error: "Phone number must contain only digits."
