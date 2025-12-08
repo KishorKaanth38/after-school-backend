@@ -13,7 +13,12 @@ const app = express();
 // ---------- MIDDLEWARE ----------
 
 // CORS
-app.use(cors());
+app.use(cors({
+  origin: "https://kishorkaanth38.github.io", // your frontend hosting
+  methods: ["GET", "POST", "PUT", "DELETE"],  // allowed HTTP methods
+  allowedHeaders: ["Content-Type"],           // allowed request headers
+}));
+
 app.use(express.json());
 
 // Logger
